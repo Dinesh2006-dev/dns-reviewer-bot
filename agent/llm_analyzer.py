@@ -9,10 +9,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate")
-MODEL      = os.environ.get("OLLAMA_MODEL", "mistral")
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate").strip()
+MODEL      = os.environ.get("OLLAMA_MODEL", "mistral").strip()
+
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
-OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL") or "google/gemma-4-31b-it:free"
+if OPENROUTER_API_KEY:
+    OPENROUTER_API_KEY = OPENROUTER_API_KEY.strip()
+
+OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL")
+if OPENROUTER_MODEL:
+    OPENROUTER_MODEL = OPENROUTER_MODEL.strip()
+if not OPENROUTER_MODEL:
+    OPENROUTER_MODEL = "google/gemma-4-31b-it:free"
 
 SYSTEM_PROMPT = """You are a DNS security expert reviewing DNS zone file changes.
 Analyze each DNS record change and classify its risk level.
