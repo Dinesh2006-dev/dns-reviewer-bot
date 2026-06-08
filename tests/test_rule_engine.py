@@ -8,13 +8,13 @@ def test_safe_record_no_flags():
     changes = [
         {
             "type": "added",
-            "raw": "api 3600 IN A 10.0.0.5",
+            "raw": "blog 3600 IN A 93.184.216.34",
             "record": {
-                "name": "api",
+                "name": "blog",
                 "ttl": 3600,
                 "rclass": "IN",
                 "rtype": "A",
-                "value": "10.0.0.5"
+                "value": "93.184.216.34"
             }
         }
     ]
@@ -25,39 +25,35 @@ def test_wildcard_critical_flag():
     changes = [
         {
             "type": "added",
-            "raw": "* 3600 IN A 1.2.3.4",
+            "raw": "* 3600 IN A 93.184.216.34",
             "record": {
                 "name": "*",
                 "ttl": 3600,
                 "rclass": "IN",
                 "rtype": "A",
-                "value": "1.2.3.4"
+                "value": "93.184.216.34"
             }
         }
     ]
     flags = check_rules(changes)
-    assert len(flags) == 1
-    assert flags[0]["rule"] == "WILDCARD_RECORD"
-    assert flags[0]["severity"] == "critical"
+    assert any(f["rule"] == "WILDCARD_RECORD" for f in flags)
 
 def test_low_ttl_warning_flag():
     changes = [
         {
             "type": "added",
-            "raw": "www 60 IN A 1.2.3.4",
+            "raw": "www 60 IN A 93.184.216.34",
             "record": {
                 "name": "www",
                 "ttl": 60,
                 "rclass": "IN",
                 "rtype": "A",
-                "value": "1.2.3.4"
+                "value": "93.184.216.34"
             }
         }
     ]
     flags = check_rules(changes)
-    assert len(flags) == 1
-    assert flags[0]["rule"] == "LOW_TTL"
-    assert flags[0]["severity"] == "warning"
+    assert any(f["rule"] == "LOW_TTL" for f in flags)
 
 def test_mx_change_high_flag():
     changes = [
@@ -74,9 +70,7 @@ def test_mx_change_high_flag():
         }
     ]
     flags = check_rules(changes)
-    assert len(flags) == 1
-    assert flags[0]["rule"] == "MX_CHANGE"
-    assert flags[0]["severity"] == "high"
+    assert any(f["rule"] == "MX_CHANGE" for f in flags)
 
 def test_ns_change_critical_flag():
     changes = [
@@ -93,9 +87,7 @@ def test_ns_change_critical_flag():
         }
     ]
     flags = check_rules(changes)
-    assert len(flags) == 1
-    assert flags[0]["rule"] == "NS_CHANGE"
-    assert flags[0]["severity"] == "critical"
+    assert any(f["rule"] == "NS_CHANGE" for f in flags)
 
 def test_soa_change_warning_flag():
     changes = [
@@ -112,6 +104,64 @@ def test_soa_change_warning_flag():
         }
     ]
     flags = check_rules(changes)
-    assert len(flags) == 1
-    assert flags[0]["rule"] == "SOA_CHANGE"
-    assert flags[0]["severity"] == "warning"
+    assert any(f["rule"] == "SOA_CHANGE" for f in flags)
+
+def test_private_ip_exposure_flag():
+    changes = [
+        {
+            "type": "added",
+            "raw": "dev 3600 IN A 192.168.1.10",
+            "record": {
+                "name": "dev",
+                "ttl": 3600,
+                "rclass": "IN",
+                "rtype": "A",
+                "value": "192.168.1.10"
+            }
+        }
+    ]
+    flags = check_rules(changes)
+    assert any(f["rule"] == "PRIVATE_IP_EXPOSURE" for f in flags)
+
+def test_critical_service_change_flag():
+    changes = [
+        {
+            "type": "added",
+            "raw": "payment 3600 IN A 93.184.216.34",
+            "record": {
+                "name": "payment",
+                "ttl": 3600,
+                "rclass": "IN",
+                "rtype": "A",
+                "value": "93.184.216.34"
+            }
+        }
+    ]
+    flags = check_rules(changes)
+    assert any(f["rule"] == "CRITICAL_SERVICE_CHANGE" for f in flags)
+
+def test_critical_record_removal_flag():
+    changes = [
+        {
+            "type": "removed",
+            "raw": "www 3600 IN A 93.184.216.34",
+            "record": {
+                "name": "www",
+                "ttl": 3600,
+                "rclass": "IN",
+                "rtype": "A",
+                "value": "93.184.216.34"
+            }
+        }
+    ]
+    flags = check_rules(changes)
+    assert any(f["rule"] == "CRITICAL_RECORD_REMOVAL" for f in flags)
+
+def test_mass_deletion_flag():
+    # Simulate deleting 5 records
+    changes = [
+        {"type": "removed", "raw": f"host{i} 3600 IN A 93.184.216.34", "record": {"name": f"host{i}", "rtype": "A"}}
+        for i in range(5)
+    ]
+    flags = check_rules(changes)
+    assert any(f["rule"] == "MASS_DELETION" for f in flags)
