@@ -1,0 +1,6 @@
+$ORIGIN techcorp.com.
+$TTL 3600
+@    IN    SOA    ns1.techcorp.com.  admin.techcorp.com. ( 2024010101 3600 900 604800 300 )
+@    IN    NS     ns1.techcorp.com.
+@    IN    NS     ns2.techcorp.com.
+*    3600  IN    A      93.184.216.34
