@@ -1,0 +1,30 @@
+# DNS Risk Rules Configuration
+# Modify thresholds here without changing code
+
+# Minimum safe TTL in seconds (below this = warning)
+min_ttl: 300
+
+# Record types that always trigger review
+high_risk_record_types:
+  - MX
+  - NS
+  - SOA
+
+# Record types that are critical if removed
+critical_if_removed:
+  - NS
+  - SOA
+  - A       # removing A record can cause downtime
+
+# Wildcard names to flag
+wildcard_patterns:
+  - "*"
+  - "*.{domain}"
+
+# Low TTL thresholds
+ttl_thresholds:
+  critical: 60     # < 60 seconds = critical
+  warning: 300     # < 300 seconds = warning
+
+# MX priority changes that are risky
+mx_priority_change_threshold: 10
