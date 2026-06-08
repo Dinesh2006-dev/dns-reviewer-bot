@@ -1,9 +1,9 @@
-# 🌐 IM-08 — DNS Zone File Reviewer (GitHub PR Bot)
+# IM-08 — DNS Zone File Reviewer (GitHub PR Bot)
 ### AI-Powered DNS Change Review Agent | Hackathon Round 4
 
 ---
 
-## 📌 Table of Contents
+## Table of Contents
 1. [What Is This Project?](#what-is-this-project)
 2. [Real-World Problem It Solves](#real-world-problem-it-solves)
 3. [How It Works — End to End](#how-it-works--end-to-end)
@@ -19,7 +19,7 @@
 
 ---
 
-## 🧠 What Is This Project?
+## What Is This Project?
 
 **IM-08 DNS Zone File Reviewer** is an AI agent that automatically reviews
 DNS zone file changes in GitHub Pull Requests.
@@ -37,7 +37,7 @@ When a developer modifies a DNS zone file and opens a PR, this agent:
 
 ---
 
-## 🚨 Real-World Problem It Solves
+## Real-World Problem It Solves
 
 DNS misconfigurations are one of the most common causes of production outages:
 
@@ -61,14 +61,14 @@ DNS misconfigurations are one of the most common causes of production outages:
 
 ---
 
-## ⚙️ How It Works — End to End
+## How It Works — End to End
 
 ```
 STEP 1: Developer opens a GitHub PR
         └─ Modifies zones/example.com.txt
 
 STEP 2: GitHub Actions workflow fires automatically
-        └─ Triggered by: on pull_request → paths: ['zones/**']
+        └─ Triggered by: on pull_request  paths: ['zones/**']
 
 STEP 3: Agent fetches PR diff via GitHub API
         └─ Extracts: before content vs after content of zone file
@@ -83,11 +83,11 @@ STEP 5: Change Diff Parser identifies what changed
         └─ Modified records (changed lines)
 
 STEP 6: Rule Engine applies risk rules
-        └─ Rule 1: Wildcard records (*.domain.com) → HIGH RISK
-        └─ Rule 2: TTL < 300 seconds → MEDIUM RISK
-        └─ Rule 3: MX record changes → HIGH RISK
-        └─ Rule 4: SOA serial not updated → WARNING
-        └─ Rule 5: NS record changes → CRITICAL RISK
+        └─ Rule 1: Wildcard records (*.domain.com)  HIGH RISK
+        └─ Rule 2: TTL < 300 seconds  MEDIUM RISK
+        └─ Rule 3: MX record changes  HIGH RISK
+        └─ Rule 4: SOA serial not updated  WARNING
+        └─ Rule 5: NS record changes  CRITICAL RISK
 
 STEP 7: LLM (OpenRouter Gemma 4 Free OR Ollama Mistral 7B) analyzes each change
         └─ Prompt: "Analyze this DNS change and classify risk"
@@ -108,7 +108,7 @@ DONE: Developer sees AI review comment on their PR instantly!
 
 ---
 
-## 🛠️ Full Tech Stack
+## Full Tech Stack
 
 | Layer              | Tool/Library        | Version   | License    | Cost  |
 |--------------------|---------------------|-----------|------------|-------|
@@ -131,52 +131,52 @@ DONE: Developer sees AI review comment on their PR instantly!
 
 ---
 
-## 🏗️ Architecture Diagram
+## Architecture Diagram
 
 ![DNS Reviewer Agent 3D Architecture Diagram](docs/architecture_3d.png)
 
-### 📊 System Flowchart
+### System Flowchart
 
 ```mermaid
 graph TD
     %% Styling Definitions
-    classDef dev fill:#e1f5fe,stroke:#0288d1,stroke-dasharray: 5 5,stroke-width:2px;
-    classDef gh fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px;
-    classDef runner fill:#efebe9,stroke:#5d4037,stroke-width:2px;
-    classDef agent fill:#eceff1,stroke:#37474f,stroke-width:2px;
-    classDef llm fill:#fff8e1,stroke:#ffb300,stroke-width:2px;
-    classDef out fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
+    classDef dev fill:#e1f5fe,stroke:#0288d1,stroke-dasharray: 5 5,stroke-width:2px,color:#000;
+    classDef gh fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000;
+    classDef runner fill:#efebe9,stroke:#5d4037,stroke-width:2px,color:#000;
+    classDef agent fill:#eceff1,stroke:#37474f,stroke-width:2px,color:#000;
+    classDef llm fill:#fff8e1,stroke:#ffb300,stroke-width:2px,color:#000;
+    classDef out fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000;
 
     %% Subgraphs & Nodes
-    subgraph DevWorkspace ["💻 Developer Workspace"]
+    subgraph DevWorkspace [" Developer Workspace"]
         A["Developer modifies Zone File<br>and opens GitHub PR"]:::dev
     end
 
-    subgraph GitHubPlatform ["🐱 GitHub Platform"]
+    subgraph GitHubPlatform [" GitHub Platform"]
         B["Pull Request Event Created"]:::gh
         C["Triggers GitHub Actions Workflow<br>(.github/workflows/dns-review.yml)"]:::gh
     end
 
-    subgraph ServerlessRunner ["☁️ GitHub Actions Runner (Serverless CI)"]
+    subgraph ServerlessRunner [" GitHub Actions Runner (Serverless CI)"]
         D["Checkout Repo & Set Up Python"]:::runner
         E["Install Dependencies<br>(dnspython, PyGithub, requests)"]:::runner
         F["Run Agent Orchestrator<br>(agent/main.py)"]:::runner
     end
 
-    subgraph AgentPipeline ["🤖 Agent Orchestrator Pipeline"]
+    subgraph AgentPipeline [" Agent Orchestrator Pipeline"]
         G["PR Fetcher<br>(PyGithub API Client)"]:::agent
         H["Diff Parser<br>(Extracts Before/After states)"]:::agent
         I["DNS Validator<br>(dnspython syntax checker)"]:::agent
         J["Enterprise Rule Engine<br>(Applies checks from dns_rules.yaml)"]:::agent
     end
 
-    subgraph RiskAnalysis ["🧠 Dynamic Risk Classifier"]
+    subgraph RiskAnalysis [" Dynamic Risk Classifier"]
         K{"LLM Provider Check"}:::llm
         L["OpenRouter Cloud API<br>(meta-llama / google-gemma)"]:::llm
         M["Local Ollama Instance<br>(mistral fallback)"]:::llm
     end
 
-    subgraph OutputTargets ["🎯 Delivery Targets"]
+    subgraph OutputTargets [" Delivery Targets"]
         N["GitHub PR Review Comment Posted"]:::out
         O["PR Risk & Review Labels Applied"]:::out
         P["Discord Channel Alert sent<br>(optional webhook)"]:::out
@@ -215,7 +215,7 @@ graph TD
 
 ---
 
-## 📁 Project Folder Structure
+## Project Folder Structure
 
 ```
 IM08_DNS_Reviewer/
@@ -257,7 +257,7 @@ IM08_DNS_Reviewer/
 
 ---
 
-## 🔍 Each Stack Explained
+## Each Stack Explained
 
 ### 1. GitHub Actions (CI/CD Trigger)
 **What it is:** Free serverless CI/CD platform built into GitHub.
@@ -280,8 +280,7 @@ IM08_DNS_Reviewer/
 ### 3. dnspython
 **What it is:** A DNS toolkit for Python.
 **Why used:** Parse and validate DNS zone file syntax accurately.
-**What it does:**
-  - Parses zone files into structured DNS record objects
+**What it does:** - Parses zone files into structured DNS record objects
   - Validates A, AAAA, CNAME, MX, TXT, NS, SOA record syntax
   - Detects malformed records, missing required fields
   - Checks IP address format validity
@@ -294,8 +293,7 @@ IM08_DNS_Reviewer/
 ### 4. PyGithub
 **What it is:** Python wrapper for the GitHub REST API v3.
 **Why used:** Fetch PR diffs and post review comments programmatically.
-**What it does:**
-  - Authenticate with GitHub token
+**What it does:** - Authenticate with GitHub token
   - Read PR file changes (before/after content)
   - Post PR review comment with full analysis
   - Add labels to PR (dns-reviewed, risk:high, etc.)
@@ -308,8 +306,7 @@ IM08_DNS_Reviewer/
 ### 5. OpenRouter (Cloud LLM API)
 **What it is:** A unified API endpoint to query top AI models, offering high-speed free models with zero dependencies.
 **Why used:** Allows the PR review bot to run serverlessly in GitHub Actions in seconds without downloading a 4GB LLM.
-**Key features:**
-  - Standard OpenAI-compatible API endpoint
+**Key features:** - Standard OpenAI-compatible API endpoint
   - Access to completely free models like `google/gemma-4-31b-it:free`
   - Requires no credit card or setup fees
 **Link:** https://openrouter.ai
@@ -319,8 +316,7 @@ IM08_DNS_Reviewer/
 ### 6. Ollama & Mistral 7B (Local Fallback LLM)
 **What it is:** Free, local LLM runner and model that executes offline.
 **Why used:** Provides a 100% private and offline fallback for local development or testing when an API key is not present.
-**What it does:**
-  - Runs the Mistral 7B model locally on port `11434`
+**What it does:** - Runs the Mistral 7B model locally on port `11434`
   - Requires no internet access after the initial download
   - Free and open source (MIT/Apache 2.0 licenses)
 **Link:** https://ollama.ai / https://mistral.ai
@@ -345,7 +341,7 @@ IM08_DNS_Reviewer/
 
 ---
 
-## 🚀 Setup & Installation
+## Setup & Installation
 
 ### Prerequisites
 - Python 3.10+
@@ -395,10 +391,10 @@ cp .env.example .env
 ```
 
 ### Step 5: Add GitHub Actions secrets
-In your GitHub repo → Settings → Secrets → Actions, add:
-- `GITHUB_TOKEN` → Your PAT (or use built-in `${{ secrets.GITHUB_TOKEN }}`)
-- `OPENROUTER_API_KEY` → Your OpenRouter API Key (this will enable Cloud LLM execution in your pipeline instantly!)
-- `DISCORD_WEBHOOK_URL` → Optional Discord webhook
+In your GitHub repo  Settings  Secrets  Actions, add:
+- `GITHUB_TOKEN`  Your PAT (or use built-in `${{ secrets.GITHUB_TOKEN }}`)
+- `OPENROUTER_API_KEY`  Your OpenRouter API Key (this will enable Cloud LLM execution in your pipeline instantly!)
+- `DISCORD_WEBHOOK_URL`  Optional Discord webhook
 
 ### Step 6: Push the workflow
 ```bash
@@ -409,7 +405,7 @@ git push
 
 ---
 
-## 🎬 How to Run & Demo
+## How to Run & Demo
 
 ### Local Testing
 ```bash
@@ -425,7 +421,7 @@ python agent/main.py
 1. Make a risky DNS change in `zones/example.com.txt`:
    ```
    # Add this risky record:
-   *    60    IN    A    1.2.3.4       ; wildcard + low TTL = HIGH RISK
+   * 60    IN    A    1.2.3.4       ; wildcard + low TTL = HIGH RISK
    ```
 2. Open a PR with this change on GitHub
 3. Watch the GitHub Actions workflow trigger automatically
@@ -433,49 +429,49 @@ python agent/main.py
 
 ### What Judges Will See
 ```
-🤖 DNS Zone Review Bot
+ DNS Zone Review Bot
 
-📋 Summary: 3 changes detected | ⚠️ 2 warnings | 🔴 1 critical
+ Summary: 3 changes detected |  2 warnings |  1 critical
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔴 CRITICAL — Wildcard Record Added
+ CRITICAL — Wildcard Record Added
 Record: *.example.com  60  IN  A  1.2.3.4
 Rule: Wildcard DNS records expose ALL subdomains
 AI Analysis: This wildcard record will resolve any subdomain to
 1.2.3.4. This is a security risk — attackers can use unclaimed
 subdomains for phishing. Recommend using explicit subdomain records.
 
-⚠️ WARNING — Very Low TTL (60 seconds)
+ WARNING — Very Low TTL (60 seconds)
 Record: *.example.com  TTL=60s  (minimum recommended: 300s)
 AI Analysis: TTL of 60s causes excessive DNS resolver queries.
 Recommend TTL >= 300 for non-critical records.
 
-✅ SAFE — A Record Addition
+ SAFE — A Record Addition
 Record: api.example.com  300  IN  A  10.0.0.5
 AI Analysis: Standard A record with adequate TTL. No issues found.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚡ Reviewed dynamically | Powered by OpenRouter / Ollama + dnspython
+ Reviewed dynamically | Powered by OpenRouter / Ollama + dnspython
 ```
 
 ---
 
-## 🤖 AI Capabilities Used
+## AI Capabilities Used
 
 This project demonstrates all 3 mandatory AI capabilities:
 
-### 1. Agent Loop ✅
+### 1. Agent Loop 
 The agent automatically:
 - Triggers on PR event (no human trigger needed)
-- Fetches data → validates → analyzes → posts result
+- Fetches data  validates  analyzes  posts result
 - Runs completely autonomously end-to-end
 
-### 2. MCP Tool (Built/Consumed) ✅
+### 2. MCP Tool (Built/Consumed) 
 The DNS validator and rule engine are structured as callable tools:
-- `validate_zone_file(content)` → structured errors
-- `check_risk_rules(records)` → risk flags
-- `analyze_with_llm(change)` → AI classification
+- `validate_zone_file(content)`  structured errors
+- `check_risk_rules(records)`  risk flags
+- `analyze_with_llm(change)`  AI classification
 
-### 3. External API / Service Integration ✅
+### 3. External API / Service Integration 
 Three external APIs/services used:
 - **GitHub API** (via PyGithub) — read PR + post comment
 - **OpenRouter API** — Zero-dependency cloud LLM analysis (e.g. Llama/Gemma)
@@ -483,7 +479,7 @@ Three external APIs/services used:
 
 ---
 
-## 📦 Open Source & Free Tools Used
+## Open Source & Free Tools Used
 
 | Tool          | What It Does In This Project         | Why Free       |
 |---------------|--------------------------------------|----------------|
@@ -501,11 +497,9 @@ Three external APIs/services used:
 | Discord       | Team notification webhook            | Free service   |
 | Git + GitHub  | Source control + PR platform         | Free plan      |
 
-**Total cost to run this project: $0.00**
+**Total cost to run this project: $0.00** ---
 
----
-
-## 📝 Prompt Documentation (Mandatory Requirement)
+## Prompt Documentation (Mandatory Requirement)
 
 See `prompts.md` for all AI prompts used during development and in the agent.
 
@@ -523,11 +517,11 @@ User: Analyze this DNS record change:
 
 ---
 
-## 🏆 Why This Wins
+## Why This Wins
 
 1. **Real industry pain** — DNS outages affect every company with servers
 2. **True agent loop** — event-driven, fully autonomous
-3. **Live demo** — PR → bot comment in < 60 seconds, live on stage
+3. **Live demo** — PR  bot comment in < 60 seconds, live on stage
 4. **Zero cost** — 100% free open-source stack
 5. **Production-ready** — actually deployable to any GitHub repo today
 6. **All 3 mandatory AI capabilities** in one project

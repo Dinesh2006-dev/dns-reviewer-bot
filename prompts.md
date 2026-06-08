@@ -1,4 +1,4 @@
-# 📝 Prompts Documentation — IM-08 DNS Zone File Reviewer
+# Prompts Documentation — IM-08 DNS Zone File Reviewer
 > Mandatory requirement: All AI prompts used during development and in the agent.
 
 ---
@@ -71,7 +71,7 @@ Write a GitHub Actions workflow YAML that:
 Write a Python function that takes DNS review results (syntax errors,
 rule flags, LLM analysis) and formats them into a structured GitHub
 PR review comment in markdown with emojis for severity levels.
-Use 🔴 for critical, ⚠️ for warning, ✅ for safe.
+Use text labels for critical, warning, and safe.
 ```
 
 ---
