@@ -1,0 +1,5 @@
+$ORIGIN wildcard.com.
+$TTL 3600
+@    IN    SOA    ns1.wildcard.com.  admin.wildcard.com. ( 2024010101 3600 900 604800 300 )
+@    IN    NS     ns1.wildcard.com.
+*    3600  IN    A      93.184.216.34

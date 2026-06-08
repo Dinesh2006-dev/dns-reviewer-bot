@@ -1,0 +1,5 @@
+$ORIGIN invalid-ip.com.
+$TTL 3600
+@    IN    SOA    ns1.invalid-ip.com.  admin.invalid-ip.com. ( 2024010101 3600 900 604800 300 )
+@    IN    NS     ns1.invalid-ip.com.
+www  IN    A      999.9.9.999
