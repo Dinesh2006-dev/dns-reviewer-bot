@@ -133,64 +133,84 @@ DONE: Developer sees AI review comment on their PR instantly!
 
 ## 🏗️ Architecture Diagram
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        DEVELOPER MACHINE                        │
-│                                                                 │
-│   git push → opens PR with zones/example.com.txt change        │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                       GITHUB PLATFORM                           │
-│                                                                 │
-│   Pull Request Created                                          │
-│   └─ Triggers: .github/workflows/dns-review.yml                │
-│      (on: pull_request, paths: ['zones/**'])                    │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    GITHUB ACTIONS RUNNER                        │
-│                      (Serverless CI)                            │
-│                                                                 │
-│   1. Checkout code                                              │
-│   2. Setup Python 3.10                                          │
-│   3. pip install -r requirements.txt                            │
-│   4. Install + start Ollama with Mistral 7B                     │
-│   5. python agent/main.py                                       │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      AGENT PIPELINE                             │
-│                                                                 │
-│  ┌─────────────┐    ┌──────────────┐    ┌──────────────────┐   │
-│  │  PR Fetcher │───▶│ Diff Parser  │───▶│  DNS Validator   │   │
-│  │  (PyGithub) │    │ (Python)     │    │  (dnspython)     │   │
-│  └─────────────┘    └──────────────┘    └──────────────────┘   │
-│                                                  │              │
-│                                                  ▼              │
-│  ┌─────────────┐    ┌──────────────┐    ┌──────────────────┐   │
-│  │  PR Comment │◀───│  Orchestrator│◀───│   Rule Engine    │   │
-│  │  Bot        │    │  (main.py)   │    │   (rules.yaml)   │   │
-│  │  (PyGithub) │    └──────────────┘    └──────────────────┘   │
-│  └─────────────┘           ▲                    │              │
-│                             │                   ▼              │
-│                    ┌──────────────┐    ┌──────────────────┐   │
-│                    │  Formatter   │◀───│   LLM Analyzer   │   │
-│                    │  (Markdown)  │    │ (OpenRouter/Ollama)│   │
-│                    └──────────────┘    └──────────────────┘   │
-└──────────────────────────────────────────────────────────────── ┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     OUTPUT TARGETS                              │
-│                                                                 │
-│   GitHub PR ──▶ Structured Review Comment Posted               │
-│   GitHub PR ──▶ Labels: 'dns-reviewed', 'risk:high'            │
-│   Discord   ──▶ Alert notification (optional)                  │
-└─────────────────────────────────────────────────────────────────┘
+![DNS Reviewer Agent 3D Architecture Diagram](docs/architecture_3d.png)
+
+### 📊 System Flowchart
+
+```mermaid
+graph TD
+    %% Styling Definitions
+    classDef dev fill:#e1f5fe,stroke:#0288d1,stroke-dasharray: 5 5,stroke-width:2px;
+    classDef gh fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px;
+    classDef runner fill:#efebe9,stroke:#5d4037,stroke-width:2px;
+    classDef agent fill:#eceff1,stroke:#37474f,stroke-width:2px;
+    classDef llm fill:#fff8e1,stroke:#ffb300,stroke-width:2px;
+    classDef out fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
+
+    %% Subgraphs & Nodes
+    subgraph DevWorkspace ["💻 Developer Workspace"]
+        A["Developer modifies Zone File<br>and opens GitHub PR"]:::dev
+    end
+
+    subgraph GitHubPlatform ["🐱 GitHub Platform"]
+        B["Pull Request Event Created"]:::gh
+        C["Triggers GitHub Actions Workflow<br>(.github/workflows/dns-review.yml)"]:::gh
+    end
+
+    subgraph ServerlessRunner ["☁️ GitHub Actions Runner (Serverless CI)"]
+        D["Checkout Repo & Set Up Python"]:::runner
+        E["Install Dependencies<br>(dnspython, PyGithub, requests)"]:::runner
+        F["Run Agent Orchestrator<br>(agent/main.py)"]:::runner
+    end
+
+    subgraph AgentPipeline ["🤖 Agent Orchestrator Pipeline"]
+        G["PR Fetcher<br>(PyGithub API Client)"]:::agent
+        H["Diff Parser<br>(Extracts Before/After states)"]:::agent
+        I["DNS Validator<br>(dnspython syntax checker)"]:::agent
+        J["Enterprise Rule Engine<br>(Applies checks from dns_rules.yaml)"]:::agent
+    end
+
+    subgraph RiskAnalysis ["🧠 Dynamic Risk Classifier"]
+        K{"LLM Provider Check"}:::llm
+        L["OpenRouter Cloud API<br>(meta-llama / google-gemma)"]:::llm
+        M["Local Ollama Instance<br>(mistral fallback)"]:::llm
+    end
+
+    subgraph OutputTargets ["🎯 Delivery Targets"]
+        N["GitHub PR Review Comment Posted"]:::out
+        O["PR Risk & Review Labels Applied"]:::out
+        P["Discord Channel Alert sent<br>(optional webhook)"]:::out
+    end
+
+    %% Connections
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    I --> J
+    J --> K
+    
+    K -- "OPENROUTER_API_KEY Set" --> L
+    K -- "No API Key" --> M
+    
+    L --> N
+    L --> O
+    L --> P
+    M --> N
+    M --> O
+    M --> P
+
+    %% Apply Styles
+    class A dev;
+    class B,C gh;
+    class D,E,F runner;
+    class G,H,I,J agent;
+    class K,L,M llm;
+    class N,O,P out;
 ```
 
 ---
