@@ -12,7 +12,7 @@ load_dotenv()
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate")
 MODEL      = os.environ.get("OLLAMA_MODEL", "mistral")
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
-OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "google/gemma-4-31b-it:free")
+OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL") or "google/gemma-4-31b-it:free"
 
 SYSTEM_PROMPT = """You are a DNS security expert reviewing DNS zone file changes.
 Analyze each DNS record change and classify its risk level.
