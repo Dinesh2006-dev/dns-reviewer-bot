@@ -28,3 +28,14 @@ ttl_thresholds:
 
 # MX priority changes that are risky
 mx_priority_change_threshold: 10
+
+# Critical business services to protect from modification
+critical_services:
+  - api
+  - auth
+  - payment
+  - mail
+
+# Mass changes thresholds
+mass_deletion_threshold: 5
+mass_creation_threshold: 10

@@ -63,9 +63,12 @@ www  IN    A      93.184.216.34
     for flag in rule_flags:
         print(f"      - {flag['severity'].upper()}: {flag['message']}")
 
-    # Analyze with LLM (Ollama)
-    print("\n[5] Running LLM Risk Analysis (Ollama/Mistral)...")
-    print("    (Make sure Ollama is running on localhost:11434 with 'mistral' model)")
+    # Analyze with LLM
+    import llm_analyzer
+    provider_name = "OpenRouter (Llama 3.1 8B Free)" if llm_analyzer.OPENROUTER_API_KEY else "local Ollama (Mistral)"
+    print(f"\n[5] Running LLM Risk Analysis via {provider_name}...")
+    if not llm_analyzer.OPENROUTER_API_KEY:
+        print("    (Note: Set OPENROUTER_API_KEY in .env to use OpenRouter Cloud API. Currently falling back to Ollama.)")
     llm_results = []
     for change in changes:
         res = analyze_with_llm(change)

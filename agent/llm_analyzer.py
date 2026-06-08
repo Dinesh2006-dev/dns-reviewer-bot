@@ -1,13 +1,18 @@
 """
-LLM Analyzer — Uses Ollama (Mistral 7B) to classify DNS change risk.
+LLM Analyzer — Uses OpenRouter API (Llama 3.1 8B Free) or local Ollama (Mistral) to classify DNS change risk.
 """
 
+import os
 import requests
 import json
+from dotenv import load_dotenv
 
+load_dotenv()
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL      = "mistral"
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate")
+MODEL      = os.environ.get("OLLAMA_MODEL", "mistral")
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "google/gemma-4-31b-it:free")
 
 SYSTEM_PROMPT = """You are a DNS security expert reviewing DNS zone file changes.
 Analyze each DNS record change and classify its risk level.
@@ -15,7 +20,7 @@ Always respond in valid JSON only. No explanation outside JSON."""
 
 def analyze_with_llm(change: dict) -> dict:
     """
-    Send a DNS change to Ollama LLM for risk classification.
+    Send a DNS change to OpenRouter (if API key is present) or Ollama LLM for risk classification.
     Returns dict with risk_level, explanation, suggestion.
     """
     record = change.get("record", {})
@@ -35,14 +40,39 @@ Respond ONLY with this JSON structure:
   "suggestion": "one actionable suggestion or null if safe"
 }}"""
 
+    use_openrouter = bool(OPENROUTER_API_KEY)
+
     try:
-        response = requests.post(
-            OLLAMA_URL,
-            json={"model": MODEL, "prompt": prompt, "system": SYSTEM_PROMPT, "stream": False},
-            timeout=60,
-        )
-        response.raise_for_status()
-        raw_text = response.json().get("response", "{}")
+        if use_openrouter:
+            headers = {
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "HTTP-Referer": "https://github.com/Dinesh2006-dev/dns-reviewer-bot",
+                "X-Title": "DNS Reviewer Bot",
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "model": OPENROUTER_MODEL,
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt}
+                ]
+            }
+            response = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=60,
+            )
+            response.raise_for_status()
+            raw_text = response.json()["choices"][0]["message"]["content"]
+        else:
+            response = requests.post(
+                OLLAMA_URL,
+                json={"model": MODEL, "prompt": prompt, "system": SYSTEM_PROMPT, "stream": False},
+                timeout=60,
+            )
+            response.raise_for_status()
+            raw_text = response.json().get("response", "{}")
 
         # Strip markdown code fences if present
         raw_text = raw_text.strip()
@@ -55,11 +85,13 @@ Respond ONLY with this JSON structure:
         result["change"] = change["raw"]
         return result
 
-    except (requests.RequestException, json.JSONDecodeError, KeyError) as e:
+    except Exception as e:
         # Fallback if LLM unavailable
+        provider = "OpenRouter" if use_openrouter else "Ollama"
         return {
             "change": change["raw"],
             "risk_level": "warning",
-            "explanation": f"LLM analysis unavailable ({e}). Manual review recommended.",
+            "explanation": f"LLM analysis via {provider} unavailable ({e}). Manual review recommended.",
             "suggestion": "Review this change manually before merging.",
         }
+

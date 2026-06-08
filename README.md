@@ -27,13 +27,13 @@ DNS zone file changes in GitHub Pull Requests.
 When a developer modifies a DNS zone file and opens a PR, this agent:
 - Reads the diff (what changed)
 - Validates DNS syntax using `dnspython`
-- Uses an LLM (Ollama/Mistral) to classify risk level
+- Uses a cloud LLM (OpenRouter) or local LLM (Ollama/Mistral) to classify risk level
 - Applies rule-based checks (wildcards, low TTL, MX changes)
 - Posts a structured review comment directly on the GitHub PR
 
 > **One-liner:** "We built an AI agent that automatically reviews DNS changes
 > in GitHub PRs before they cause production outages — zero human intervention,
-> under 60 seconds."
+> under 60 seconds (using OpenRouter Cloud or local Ollama)."
 
 ---
 
@@ -89,10 +89,10 @@ STEP 6: Rule Engine applies risk rules
         └─ Rule 4: SOA serial not updated → WARNING
         └─ Rule 5: NS record changes → CRITICAL RISK
 
-STEP 7: LLM (Ollama + Mistral 7B) analyzes each change
+STEP 7: LLM (OpenRouter Gemma 4 Free OR Ollama Mistral 7B) analyzes each change
         └─ Prompt: "Analyze this DNS change and classify risk"
         └─ Returns: Safe / Warning / High Risk / Critical
-        └─ With: plain-English explanation of why
+        └─ With: plain-English explanation of why and mitigation suggestions
 
 STEP 8: Agent Orchestrator combines all outputs
         └─ Merges: syntax errors + rule flags + LLM analysis
@@ -116,9 +116,10 @@ DONE: Developer sees AI review comment on their PR instantly!
 | Language           | Python              | 3.10+     | PSF        | FREE  |
 | DNS Validation     | dnspython           | 2.4.2     | ISC        | FREE  |
 | GitHub API         | PyGithub            | 2.1.1     | LGPL       | FREE  |
-| AI/LLM             | Ollama              | Latest    | MIT        | FREE  |
-| AI Model           | Mistral 7B          | 0.2       | Apache 2.0 | FREE  |
-| Alt AI Model       | Gemma 2B            | Latest    | Apache 2.0 | FREE  |
+| Cloud AI/LLM       | OpenRouter          | Latest    | Free Plan  | FREE  |
+| Cloud Model        | Gemma 4 (31B) IT    | Latest    | Free Tier  | FREE  |
+| Local AI/LLM       | Ollama              | Latest    | MIT        | FREE  |
+| Local Model        | Mistral 7B          | 0.2       | Apache 2.0 | FREE  |
 | HTTP Client        | requests            | 2.31.0    | Apache 2.0 | FREE  |
 | Config/Rules       | PyYAML              | 6.0.1     | MIT        | FREE  |
 | Environment Vars   | python-dotenv       | 1.0.0     | BSD        | FREE  |
@@ -178,7 +179,7 @@ DONE: Developer sees AI review comment on their PR instantly!
 │                             │                   ▼              │
 │                    ┌──────────────┐    ┌──────────────────┐   │
 │                    │  Formatter   │◀───│   LLM Analyzer   │   │
-│                    │  (Markdown)  │    │  (Ollama/Mistral) │   │
+│                    │  (Markdown)  │    │ (OpenRouter/Ollama)│   │
 │                    └──────────────┘    └──────────────────┘   │
 └──────────────────────────────────────────────────────────────── ┘
                            │
@@ -284,31 +285,25 @@ IM08_DNS_Reviewer/
 
 ---
 
-### 5. Ollama
-**What it is:** Free, local LLM runner — runs AI models on your machine.
-**Why used:** Run Mistral 7B locally for free, no API key needed.
-**What it does:**
-  - Hosts Mistral 7B model locally
-  - Exposes REST API at localhost:11434
-  - No internet required after model download
-  - No token limits, no cost
-**Install:** https://ollama.ai (one command install)
-**Free:** Yes, MIT License.
-**Link:** https://ollama.ai
+### 5. OpenRouter (Cloud LLM API)
+**What it is:** A unified API endpoint to query top AI models, offering high-speed free models with zero dependencies.
+**Why used:** Allows the PR review bot to run serverlessly in GitHub Actions in seconds without downloading a 4GB LLM.
+**Key features:**
+  - Standard OpenAI-compatible API endpoint
+  - Access to completely free models like `google/gemma-4-31b-it:free`
+  - Requires no credit card or setup fees
+**Link:** https://openrouter.ai
 
 ---
 
-### 6. Mistral 7B (AI Model)
-**What it is:** Open-source 7B parameter language model by Mistral AI.
-**Why used:** Best free model for classification + explanation tasks.
-**What it does in this project:**
-  - Analyzes each DNS record change
-  - Classifies risk: Safe / Warning / High Risk / Critical
-  - Explains WHY the change is risky in plain English
-  - Suggests safer alternatives
-**Free:** Yes, Apache 2.0 License.
-**Pull command:** `ollama pull mistral`
-**Link:** https://mistral.ai
+### 6. Ollama & Mistral 7B (Local Fallback LLM)
+**What it is:** Free, local LLM runner and model that executes offline.
+**Why used:** Provides a 100% private and offline fallback for local development or testing when an API key is not present.
+**What it does:**
+  - Runs the Mistral 7B model locally on port `11434`
+  - Requires no internet access after the initial download
+  - Free and open source (MIT/Apache 2.0 licenses)
+**Link:** https://ollama.ai / https://mistral.ai
 
 ---
 
@@ -335,7 +330,8 @@ IM08_DNS_Reviewer/
 ### Prerequisites
 - Python 3.10+
 - GitHub account + repository
-- Ollama installed (https://ollama.ai)
+- OpenRouter Account & API Key (Get a free key at [openrouter.ai](https://openrouter.ai/)) — *Recommended for zero-dependency CI/CD execution*
+- Ollama installed locally (https://ollama.ai) — *Optional, local fallback for offline development*
 - GitHub Personal Access Token (PAT) with `repo` scope
 
 ### Step 1: Clone the repo
@@ -349,12 +345,18 @@ cd IM08_DNS_Reviewer
 pip install -r requirements.txt
 ```
 
-### Step 3: Install Ollama + Pull Mistral
+### Step 3: Configure OpenRouter (Cloud LLM - Recommended)
+To run the agent in the cloud without local dependencies:
+1. Register on [openrouter.ai](https://openrouter.ai/).
+2. Create an API key.
+3. Keep the key ready to add to your `.env` (locally) and GitHub Actions secrets.
+
+*Alternatively, if you want local development/testing offline using Ollama:*
 ```bash
 # Install Ollama (Linux/Mac)
 curl -fsSL https://ollama.ai/install.sh | sh
 
-# Pull Mistral 7B model (one-time, ~4GB download)
+# Pull Mistral 7B model
 ollama pull mistral
 
 # Start Ollama server
@@ -367,12 +369,15 @@ cp .env.example .env
 # Edit .env and fill in:
 # GITHUB_TOKEN=your_github_pat_here
 # GITHUB_REPO=yourusername/your-repo
+# OPENROUTER_API_KEY=your_openrouter_api_key_here  # Optional: For Cloud API (Gemma)
+# OPENROUTER_MODEL=google/gemma-4-31b-it:free     # Optional: For choosing model slug
 # DISCORD_WEBHOOK_URL=optional_webhook_url
 ```
 
 ### Step 5: Add GitHub Actions secrets
-In your GitHub repo → Settings → Secrets → Actions:
+In your GitHub repo → Settings → Secrets → Actions, add:
 - `GITHUB_TOKEN` → Your PAT (or use built-in `${{ secrets.GITHUB_TOKEN }}`)
+- `OPENROUTER_API_KEY` → Your OpenRouter API Key (this will enable Cloud LLM execution in your pipeline instantly!)
 - `DISCORD_WEBHOOK_URL` → Optional Discord webhook
 
 ### Step 6: Push the workflow
@@ -429,7 +434,7 @@ Recommend TTL >= 300 for non-critical records.
 Record: api.example.com  300  IN  A  10.0.0.5
 AI Analysis: Standard A record with adequate TTL. No issues found.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚡ Reviewed in 28 seconds | Powered by Mistral 7B + dnspython
+⚡ Reviewed dynamically | Powered by OpenRouter / Ollama + dnspython
 ```
 
 ---
@@ -451,9 +456,10 @@ The DNS validator and rule engine are structured as callable tools:
 - `analyze_with_llm(change)` → AI classification
 
 ### 3. External API / Service Integration ✅
-Two external APIs used:
+Three external APIs/services used:
 - **GitHub API** (via PyGithub) — read PR + post comment
-- **Ollama REST API** — localhost:11434/api/generate for LLM
+- **OpenRouter API** — Zero-dependency cloud LLM analysis (e.g. Llama/Gemma)
+- **Ollama REST API** — Local fallback for offline execution
 
 ---
 
@@ -465,6 +471,7 @@ Two external APIs used:
 | Python 3.10   | Core language                        | Open source PSF |
 | dnspython     | Parse + validate DNS zone syntax     | ISC License    |
 | PyGithub      | GitHub API — fetch diff + post PR    | LGPL License   |
+| OpenRouter    | Cloud LLM completions endpoint       | Free plan available |
 | Ollama        | Run LLM locally                      | MIT License    |
 | Mistral 7B    | AI risk analysis + explanation       | Apache 2.0     |
 | PyYAML        | Load risk rules config               | MIT License    |
