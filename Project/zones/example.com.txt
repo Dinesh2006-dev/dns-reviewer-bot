@@ -17,6 +17,7 @@ $TTL 3600
 ; A Records
 @         3600    IN    A      93.184.216.34
 www       3600    IN    A      93.184.216.34
+www       3600    IN    CNAME  target.example.com.
 api       3600    IN    A      10.0.0.5
 mail      3600    IN    A      10.0.0.99
 
@@ -25,3 +26,4 @@ mail      3600    IN    A      10.0.0.99
 
 ; TXT Records
 @    IN    TXT   "v=spf1 include:_spf.example.com ~all"
+@    IN    TXT   "v=spf1 ip4:1.2.3.4 -all"
