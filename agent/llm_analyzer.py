@@ -22,8 +22,8 @@ if OPENROUTER_MODEL:
 if not OPENROUTER_MODEL:
     OPENROUTER_MODEL = "google/gemma-4-31b-it:free"
 
-SYSTEM_PROMPT = """You are a DNS security expert reviewing DNS zone file changes.
-Analyze each DNS record change and classify its risk level.
+SYSTEM_PROMPT = """You are a senior DNS security and infrastructure operations engineer reviewing DNS zone file modifications.
+Analyze each DNS record change, identify potential security, availability, or operational issues, and determine the risk level.
 Always respond in valid JSON only. No explanation outside JSON."""
 
 def analyze_with_llm(change: dict) -> dict:
@@ -44,8 +44,8 @@ Value: {record.get('value', 'unknown')}
 Respond ONLY with this JSON structure:
 {{
   "risk_level": "safe|warning|high_risk|critical",
-  "explanation": "2 sentence explanation of why this risk level",
-  "suggestion": "one actionable suggestion or null if safe"
+  "explanation": "Detailed, professional technical analysis of the security or availability impact of this modification.",
+  "suggestion": "Detailed, step-by-step actionable recommendation to safely deploy, verify, or mitigate the risk of this change."
 }}"""
 
     use_openrouter = bool(OPENROUTER_API_KEY)

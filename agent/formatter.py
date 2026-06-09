@@ -2,19 +2,19 @@
 Formatter — Builds the final markdown review comment for the GitHub PR.
 """
 
-SEVERITY_EMOJI = {
-    "critical": "🔴",
-    "high":     "🟠",
-    "high_risk":"🟠",
-    "warning":  "⚠️",
-    "safe":     "✅",
+SEVERITY_TAG = {
+    "critical": "[CRITICAL]",
+    "high":     "[HIGH]",
+    "high_risk":"[HIGH RISK]",
+    "warning":  "[WARNING]",
+    "safe":     "[SAFE]",
 }
 
 
 def calculate_risk_score(all_results: list[dict]) -> tuple[int, str]:
     has_syntax_errors = any(len(r["syntax_errors"]) > 0 for r in all_results)
     if has_syntax_errors:
-        return 100, "🔴 CRITICAL (Syntax Outage Risk)"
+        return 100, "CRITICAL (Syntax Outage Risk)"
     
     score = 0
     for r in all_results:
@@ -30,13 +30,13 @@ def calculate_risk_score(all_results: list[dict]) -> tuple[int, str]:
     score = min(score, 100)
     
     if score >= 81:
-        category = "🔴 CRITICAL RISK"
+        category = "CRITICAL RISK"
     elif score >= 51:
-        category = "🟠 HIGH RISK"
+        category = "HIGH RISK"
     elif score >= 21:
-        category = "⚠️ WARNING"
+        category = "WARNING"
     else:
-        category = "✅ SAFE"
+        category = "SAFE"
         
     return score, category
 
@@ -48,7 +48,7 @@ def format_review(all_results: list[dict]) -> str:
     else:
         model_name = f"Ollama ({llm_analyzer.MODEL})"
 
-    lines = ["## 🤖 DNS Zone Review Bot\n"]
+    lines = ["## DNS Zone Review Report\n"]
     lines.append(f"*Automated review powered by {model_name} + dnspython*\n")
     lines.append("---\n")
 
@@ -61,40 +61,40 @@ def format_review(all_results: list[dict]) -> str:
 
     score, category = calculate_risk_score(all_results)
 
-    lines.append(f"**📋 Summary:** {total_changes} change(s) detected")
+    lines.append(f"**Summary:** {total_changes} change(s) detected")
     if critical_count:
-        lines.append(f" | 🔴 {critical_count} critical")
+        lines.append(f" | {critical_count} critical issue(s)")
     if total_flags - critical_count > 0:
-        lines.append(f" | ⚠️ {total_flags - critical_count} warning(s)")
-    lines.append(f"\n**🎯 Risk Score:** {score}/100 ({category})\n")
+        lines.append(f" | {total_flags - critical_count} warning(s)")
+    lines.append(f"\n**Risk Score:** {score}/100 ({category})\n")
     lines.append("\n\n---\n")
 
     for result in all_results:
-        lines.append(f"### 📄 File: `{result['filename']}`\n")
+        lines.append(f"### File: `{result['filename']}`\n")
 
         # Syntax errors
         if result["syntax_errors"]:
-            lines.append("#### 🚫 Syntax Errors\n")
+            lines.append("#### Syntax Errors\n")
             for err in result["syntax_errors"]:
                 lines.append(f"- **Line {err['line']}:** {err['error']}\n")
             lines.append("\n")
 
         # Rule flags
         if result["rule_flags"]:
-            lines.append("#### 📏 Rule-Based Checks\n")
+            lines.append("#### Rule-Based Checks\n")
             for flag in result["rule_flags"]:
-                emoji = SEVERITY_EMOJI.get(flag["severity"], "⚠️")
-                lines.append(f"{emoji} **{flag['severity'].upper()} — {flag['rule'].replace('_', ' ').title()}**\n")
+                tag = SEVERITY_TAG.get(flag["severity"], "[WARNING]")
+                lines.append(f"**{tag} {flag['rule'].replace('_', ' ').title()}**\n")
                 lines.append(f"- Record: `{flag['change']}`\n")
                 lines.append(f"- Issue: {flag['message']}\n")
                 lines.append(f"- Suggestion: _{flag['suggestion']}_\n\n")
 
         # LLM results
         if result["llm_results"]:
-            lines.append(f"#### 🧠 AI Risk Analysis ({model_name})\n")
+            lines.append(f"#### AI Risk Analysis ({model_name})\n")
             for llm in result["llm_results"]:
-                emoji = SEVERITY_EMOJI.get(llm.get("risk_level", "warning"), "⚠️")
-                lines.append(f"{emoji} **{llm.get('risk_level', 'unknown').upper().replace('_', ' ')}**\n")
+                tag = SEVERITY_TAG.get(llm.get("risk_level", "warning"), "[WARNING]")
+                lines.append(f"**{tag} LLM Classification**\n")
                 lines.append(f"- Record: `{llm.get('change', '')}`\n")
                 lines.append(f"- Analysis: {llm.get('explanation', '')}\n")
                 if llm.get("suggestion"):
@@ -103,5 +103,5 @@ def format_review(all_results: list[dict]) -> str:
 
         lines.append("---\n")
 
-    lines.append("\n*⚡ Review completed automatically | IM-08 DNS Zone Reviewer*")
+    lines.append("\n*Review completed automatically | IM-08 DNS Zone Reviewer*")
     return "".join(lines)

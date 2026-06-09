@@ -48,13 +48,16 @@ www  IN    A      93.184.216.34
     for c in changes:
         print(f"      - {c['type'].upper()}: {c['raw']}")
 
+    # Configure stdout to use UTF-8
+    sys.stdout.reconfigure(encoding='utf-8')
+
     # Validate syntax
     print("\n[3] Running DNS Syntax Validation...")
     syntax_errors = validate_zone(mock_after_content, origin=origin)
     if not syntax_errors:
-        print("    ✅ DNS Syntax: Valid!")
+        print("    [OK] DNS Syntax: Valid!")
     else:
-        print("    ❌ DNS Syntax Errors found:", syntax_errors)
+        print("    [ERROR] DNS Syntax Errors found:", syntax_errors)
 
     # Check rules
     print("\n[4] Running Rule Engine...")
