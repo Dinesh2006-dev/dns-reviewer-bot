@@ -16,7 +16,7 @@ from pr_commenter import post_comment
 load_dotenv()
 
 def get_origin_from_filename(filename: str) -> str:
-    """Extract origin domain from file name (e.g. zones/example.com.txt -> example.com.)"""
+    """Extract origin domain from file name (e.g. Project/zones/example.com.txt -> example.com.)"""
     basename = os.path.basename(filename)
     for ext in (".txt", ".zone", ".db"):
         if basename.endswith(ext):
@@ -36,7 +36,7 @@ def run_agent():
 
     # Step 1: Fetch PR diff
     changed_files = fetch_pr_diff(token, repo, pr_num)
-    zone_files = [f for f in changed_files if f["filename"].startswith("zones/")]
+    zone_files = [f for f in changed_files if f["filename"].startswith("Project/zones/")]
 
     if not zone_files:
         print("[Agent] No zone files changed. Skipping.")

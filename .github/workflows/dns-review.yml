@@ -3,7 +3,7 @@ name: DNS Zone File Review
 on:
   pull_request:
     paths:
-      - 'zones/**'
+      - 'Project/zones/**'
     types: [opened, synchronize, reopened]
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install -r Project/requirements.txt
 
       - name: Install Ollama
         if: ${{ env.OPENROUTER_API_KEY == '' }}
@@ -47,4 +47,4 @@ jobs:
           OPENROUTER_MODEL: ${{ secrets.OPENROUTER_MODEL }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          python agent/main.py
+          python Project/main.py

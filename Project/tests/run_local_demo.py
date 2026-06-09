@@ -2,7 +2,7 @@ import os
 import sys
 
 # Add agent folder to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'agent')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from diff_parser import parse_diff
 from dns_validator import validate_zone
@@ -13,10 +13,10 @@ from formatter import format_review
 def run_local_demo():
     print("=== DNS Reviewer Agent Local Demo ===")
     
-    # 1. Define a mock diff patch simulating changes in zones/example.com.txt
+    # 1. Define a mock diff patch simulating changes in Project/zones/example.com.txt
     mock_patch = (
-        "--- zones/example.com.txt\n"
-        "+++ zones/example.com.txt\n"
+        "--- Project/zones/example.com.txt\n"
+        "+++ Project/zones/example.com.txt\n"
         "@@ -18,4 +18,6 @@\n"
         " www       3600    IN    A      93.184.216.34\n"
         "+*          60     IN    A      1.2.3.4\n"
@@ -33,7 +33,7 @@ www  IN    A      93.184.216.34
 @    IN    MX     10 mail.example.com.
 """
 
-    filename = "zones/example.com.txt"
+    filename = "Project/zones/example.com.txt"
     print(f"\n[1] Simulating changes in: {filename}")
     
     # Extract origin

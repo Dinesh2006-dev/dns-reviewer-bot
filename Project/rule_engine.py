@@ -7,7 +7,7 @@ import os
 import ipaddress
 
 
-RULES_PATH = os.path.join(os.path.dirname(__file__), "..", "rules", "dns_rules.yaml")
+RULES_PATH = os.path.join(os.path.dirname(__file__), "rules", "dns_rules.yaml")
 
 
 def load_rules() -> dict:
