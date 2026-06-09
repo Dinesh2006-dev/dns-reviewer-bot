@@ -165,3 +165,36 @@ def test_mass_deletion_flag():
     ]
     flags = check_rules(changes)
     assert any(f["rule"] == "MASS_DELETION" for f in flags)
+
+def test_record_modification_does_not_trigger_removal_flag():
+    # Simulate a modification (removal + addition of the same record name and type)
+    changes = [
+        {
+            "type": "removed",
+            "raw": "mail 3600 IN A 10.0.0.10",
+            "record": {
+                "name": "mail",
+                "ttl": 3600,
+                "rclass": "IN",
+                "rtype": "A",
+                "value": "10.0.0.10"
+            }
+        },
+        {
+            "type": "added",
+            "raw": "mail 3600 IN A 10.0.0.11",
+            "record": {
+                "name": "mail",
+                "ttl": 3600,
+                "rclass": "IN",
+                "rtype": "A",
+                "value": "10.0.0.11"
+            }
+        }
+    ]
+    flags = check_rules(changes)
+    # CRITICAL_RECORD_REMOVAL should not trigger
+    assert not any(f["rule"] == "CRITICAL_RECORD_REMOVAL" for f in flags)
+    # CRITICAL_SERVICE_CHANGE should trigger exactly once (not twice)
+    service_changes = [f for f in flags if f["rule"] == "CRITICAL_SERVICE_CHANGE"]
+    assert len(service_changes) == 1

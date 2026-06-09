@@ -32,12 +32,21 @@ def check_rules(changes: list[dict]) -> list[dict]:
     rules = load_rules()
     flags = []
 
+    # Map the added record keys (name, rtype) to identify modifications
+    added_keys = {
+        (c["record"].get("name"), c["record"].get("rtype"))
+        for c in changes if c["type"] == "added"
+    }
+
     for change in changes:
         record = change.get("record", {})
         rtype  = record.get("rtype", "")
         name   = record.get("name", "")
         ttl    = record.get("ttl")
         value  = record.get("value", "")
+
+        # Determine if this removal is part of an update/modification
+        is_modification = (name, rtype) in added_keys
 
         # Rule 1: Wildcard record
         if name.startswith("*") and change["type"] == "added":
@@ -93,13 +102,14 @@ def check_rules(changes: list[dict]) -> list[dict]:
         # Rule 6: Critical Record Removal
         critical_removed = rules.get("critical_if_removed", ["NS", "SOA", "A"])
         if change["type"] == "removed" and rtype in critical_removed:
-            flags.append({
-                "change": change["raw"],
-                "rule": "CRITICAL_RECORD_REMOVAL",
-                "severity": "critical" if rtype in ("NS", "SOA") else "high",
-                "message": f"A critical authoritative record of type {rtype} ({name}) was deleted. Removing core root records (like A, NS, or SOA) will result in immediate resolution failures for client requests and disrupt all dependent web and API services.",
-                "suggestion": f"Confirm that the service associated with this host has been successfully retired or migrated to another endpoint, and verify that no active systems or clients are still resolving this record before final approval.",
-            })
+            if not is_modification:
+                flags.append({
+                    "change": change["raw"],
+                    "rule": "CRITICAL_RECORD_REMOVAL",
+                    "severity": "critical" if rtype in ("NS", "SOA") else "high",
+                    "message": f"A critical authoritative record of type {rtype} ({name}) was deleted. Removing core root records (like A, NS, or SOA) will result in immediate resolution failures for client requests and disrupt all dependent web and API services.",
+                    "suggestion": f"Confirm that the service associated with this host has been successfully retired or migrated to another endpoint, and verify that no active systems or clients are still resolving this record before final approval.",
+                })
 
         # Rule 8: Private IP Exposure
         if change["type"] == "added" and rtype in ("A", "AAAA") and is_private_ip(value):
@@ -115,13 +125,15 @@ def check_rules(changes: list[dict]) -> list[dict]:
         critical_services = rules.get("critical_services", ["api", "auth", "payment", "mail"])
         name_part = name.split('.')[0] if '.' in name else name
         if name_part in critical_services:
-            flags.append({
-                "change": change["raw"],
-                "rule": "CRITICAL_SERVICE_CHANGE",
-                "severity": "high",
-                "message": f"A record affecting a critical service subdomain ('{name}') was modified or deleted. Critical subdomains (such as api, auth, payment, and mail) handle core business functions and transactions, and changes here present a high risk of business-critical service disruptions.",
-                "suggestion": "Request a peer review and double-signoff from the Infrastructure or DevOps team lead. Validate the target endpoint in a staging environment to ensure full service compatibility before merging.",
-            })
+            # Avoid duplicate warning logs by only firing once per modification (on the added step)
+            if change["type"] == "added" or (change["type"] == "removed" and not is_modification):
+                flags.append({
+                    "change": change["raw"],
+                    "rule": "CRITICAL_SERVICE_CHANGE",
+                    "severity": "high",
+                    "message": f"A record affecting a critical service subdomain ('{name}') was modified or deleted. Critical subdomains (such as api, auth, payment, and mail) handle core business functions and transactions, and changes here present a high risk of business-critical service disruptions.",
+                    "suggestion": "Request a peer review and double-signoff from the Infrastructure or DevOps team lead. Validate the target endpoint in a staging environment to ensure full service compatibility before merging.",
+                })
 
     # Rule 11 & 12: Mass Deletions & Additions
     additions = sum(1 for c in changes if c["type"] == "added")
