@@ -1,5 +1,0 @@
-Resume Details
-
-Name: Abdul
-Contact: abdul@example.com
-Experience: DevOps Engineer, DNS Infrastructure Specialist
