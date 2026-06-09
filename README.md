@@ -133,7 +133,7 @@ DONE: Developer sees AI review comment on their PR instantly!
 
 ## Architecture Diagram
 
-![DNS Reviewer Agent 3D Architecture Diagram](docs/architecture_3d.png)
+![DNS Reviewer Agent 3D Architecture Diagram](Document/architecture_3d.png)
 
 ### System Flowchart
 
