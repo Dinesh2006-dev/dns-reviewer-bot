@@ -1,7 +1,7 @@
 """
 Diff Parser — Identifies added, removed, and modified DNS records from a PR diff.
 """
-
+ 
 
 def parse_diff(patch: str, before: str, after: str) -> list[dict]:
     """
