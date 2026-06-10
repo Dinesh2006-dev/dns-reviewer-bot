@@ -24,7 +24,7 @@ if not OPENROUTER_MODEL:
 
 SYSTEM_PROMPT = """You are a senior DNS security and infrastructure operations engineer reviewing DNS zone file modifications.
 Analyze each DNS record change, identify potential security, availability, or operational issues, and determine the risk level.
-Always respond in valid JSON only. No explanation outside JSON."""
+Always respond in valid JSON only. No explanation outside JSON.""" 
 
 def analyze_with_llm(change: dict) -> dict:
     """
