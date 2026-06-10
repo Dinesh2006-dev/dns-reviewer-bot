@@ -15,11 +15,11 @@ $TTL 3600
 @    IN    NS    ns2.example.com.
 
 ; A Records
-@         3600    IN    A      93.184.216.34
+@         3600    IN    A      93.184.216.35
 www       3600    IN    A      93.184.216.34
 www       3600    IN    CNAME  target.example.com.
 api       3600    IN    A      10.0.0.5
-mail      3600    IN    A      10.0.0.99
+mail      3600    IN    A      10.0.0.98
 
 ; MX Records
 @    IN    MX    10    mail.example.com.
