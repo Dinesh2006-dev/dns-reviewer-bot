@@ -24,7 +24,7 @@ if not OPENROUTER_MODEL:
 
 SYSTEM_PROMPT = """You are a senior DNS security and infrastructure operations engineer reviewing DNS zone file modifications.
 Analyze each DNS record change, identify potential security, availability, or operational issues, and determine the risk level.
-Always respond in valid JSON only. No explanation outside JSON."""
+Always respond in valid JSON only. No explanation outside JSON. Keep explanations and suggestions very short, direct, and concise (maximum 1-2 sentences)."""
 
 def analyze_with_llm(change: dict) -> dict:
     """
@@ -44,8 +44,8 @@ Value: {record.get('value', 'unknown')}
 Respond ONLY with this JSON structure:
 {{
   "risk_level": "safe|warning|high_risk|critical",
-  "explanation": "Detailed, professional technical analysis of the security or availability impact of this modification.",
-  "suggestion": "Detailed, step-by-step actionable recommendation to safely deploy, verify, or mitigate the risk of this change."
+  "explanation": "A very short, concise technical analysis of the security or availability impact (maximum 2 sentences).",
+  "suggestion": "A very short, direct recommendation to safely deploy or mitigate the risk (maximum 1 sentence)."
 }}"""
 
     use_openrouter = bool(OPENROUTER_API_KEY)
