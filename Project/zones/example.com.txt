@@ -16,10 +16,10 @@ $TTL 3600
 
 ; A Records
 @         3600    IN    A      93.184.216.35
-www       3600    IN    A      93.184.215.34
+www       3600    IN    A      93.184.215.32
 www       3600    IN    CNAME  target.example.com.
-api       3600    IN    A      10.0.0.5
-mail      3600    IN    A      10.0.0.99
+api       3600    IN    A      10.0.0.6
+mail      3600    IN    A      10.0.0.98
 
 ; MX Records
 @    IN    MX    10    mail.example.com.
