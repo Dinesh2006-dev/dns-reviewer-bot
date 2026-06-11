@@ -49,7 +49,19 @@ def check_rules(changes: list[dict]) -> list[dict]:
         is_modification = (name, rtype) in added_keys
 
         # Rule 1: Wildcard record
-        if name.startswith("*") and change["type"] == "added":
+        wildcard_patterns = rules.get("wildcard_patterns", ["*"])
+        is_wildcard = False
+        for pat in wildcard_patterns:
+            clean_pat = pat.replace("{domain}", "").strip()
+            if clean_pat == "*":
+                if name == "*" or name.startswith("*."):
+                    is_wildcard = True
+                    break
+            elif clean_pat and name.startswith(clean_pat):
+                is_wildcard = True
+                break
+
+        if is_wildcard and change["type"] == "added":
             flags.append({
                 "change": change["raw"],
                 "rule": "WILDCARD_RECORD",
@@ -60,17 +72,25 @@ def check_rules(changes: list[dict]) -> list[dict]:
 
         # Rule 2: Low TTL
         min_ttl = rules.get("min_ttl", 300)
-        if ttl is not None and ttl < min_ttl and change["type"] == "added":
-            flags.append({
-                "change": change["raw"],
-                "rule": "LOW_TTL",
-                "severity": "warning",
-                "message": f"A low Time-To-Live (TTL) of {ttl} seconds was configured (recommended minimum threshold is {min_ttl} seconds). Low TTLs increase the query volume to authoritative name servers, potentially increasing latency and DNS hosting costs, and making the zone more susceptible to denial-of-service (DoS) amplification.",
-                "suggestion": f"Increase the TTL to at least {min_ttl} seconds (or 3600 for stable records).",
-            })
+        ttl_thresholds = rules.get("ttl_thresholds", {})
+        crit_ttl = ttl_thresholds.get("critical", 60)
+        warn_ttl = ttl_thresholds.get("warning", min_ttl)
+        if ttl is not None and change["type"] == "added":
+            if ttl < warn_ttl:
+                severity = "critical" if ttl < crit_ttl else "warning"
+                flags.append({
+                    "change": change["raw"],
+                    "rule": "LOW_TTL",
+                    "severity": severity,
+                    "message": f"A low Time-To-Live (TTL) of {ttl} seconds was configured (recommended minimum threshold is {warn_ttl} seconds). Low TTLs increase the query volume to authoritative name servers, potentially increasing latency and DNS hosting costs, and making the zone more susceptible to denial-of-service (DoS) amplification.",
+                    "suggestion": f"Increase the TTL to at least {warn_ttl} seconds (or 3600 for stable records).",
+                })
+
+        # Rule 3, 4, 5: High-risk record types (MX, NS, SOA)
+        high_risk_types = rules.get("high_risk_record_types", ["MX", "NS", "SOA"])
 
         # Rule 3: MX record change
-        if rtype == "MX":
+        if rtype == "MX" and "MX" in high_risk_types:
             flags.append({
                 "change": change["raw"],
                 "rule": "MX_CHANGE",
@@ -80,7 +100,7 @@ def check_rules(changes: list[dict]) -> list[dict]:
             })
 
         # Rule 4: NS record change
-        if rtype == "NS":
+        if rtype == "NS" and "NS" in high_risk_types:
             flags.append({
                 "change": change["raw"],
                 "rule": "NS_CHANGE",
@@ -90,7 +110,7 @@ def check_rules(changes: list[dict]) -> list[dict]:
             })
 
         # Rule 5: SOA change
-        if rtype == "SOA":
+        if rtype == "SOA" and "SOA" in high_risk_types:
             flags.append({
                 "change": change["raw"],
                 "rule": "SOA_CHANGE",
