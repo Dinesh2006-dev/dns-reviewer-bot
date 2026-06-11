@@ -4,6 +4,7 @@ Entry point for the agent pipeline.
 """
 
 import os
+import time
 from dotenv import load_dotenv
 from pr_fetcher import fetch_pr_diff
 from diff_parser import parse_diff
@@ -63,6 +64,7 @@ def run_agent():
         for change in changes:
             result = analyze_with_llm(change)
             llm_results.append(result)
+            time.sleep(1)  # Pace API requests to prevent 429 rate limits
 
         all_results.append({
             "filename": zone_file["filename"],
