@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from diff_parser import parse_diff
 from dns_validator import validate_zone
 from rule_engine import check_rules
-from llm_analyzer import analyze_with_llm
+from llm_analyzer import analyze_batch_with_llm
 from formatter import format_review
 
 def run_local_demo():
@@ -72,12 +72,10 @@ www  IN    A      93.184.216.34
     print(f"\n[5] Running LLM Risk Analysis via {provider_name}...")
     if not llm_analyzer.OPENROUTER_API_KEY:
         print("    (Note: Set OPENROUTER_API_KEY in .env to use OpenRouter Cloud API. Currently falling back to Ollama.)")
-    llm_results = []
-    for change in changes:
-        res = analyze_with_llm(change)
-        llm_results.append(res)
+    llm_results = analyze_batch_with_llm(changes)
+    for res in llm_results:
         print(f"      - Record: {res.get('change')}")
-        print(f"        Risk Level: {res.get('risk_level').upper()}")
+        print(f"        Risk Level: {str(res.get('risk_level')).upper()}")
         print(f"        Explanation: {res.get('explanation')}")
         print(f"        Suggestion: {res.get('suggestion')}")
 

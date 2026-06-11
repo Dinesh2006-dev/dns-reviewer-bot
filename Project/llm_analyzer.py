@@ -103,3 +103,105 @@ Respond ONLY with this JSON structure:
             "suggestion": "Review this change manually before merging.",
         }
 
+
+def analyze_batch_with_llm(changes: list[dict]) -> list[dict]:
+    """
+    Send all DNS changes in a single batch request to OpenRouter or Ollama LLM.
+    Returns a list of dicts with change, risk_level, explanation, suggestion keys.
+    """
+    if not changes:
+        return []
+
+    use_openrouter = bool(OPENROUTER_API_KEY)
+    
+    # Format changes list into prompt
+    change_items = []
+    for idx, c in enumerate(changes, 1):
+        record = c.get("record", {})
+        change_items.append(
+            f"Change #{idx}:\n"
+            f"Type: {c['type']}\n"
+            f"Raw record: {c['raw']}\n"
+            f"Name: {record.get('name', 'unknown')}\n"
+            f"Rtype: {record.get('rtype', 'unknown')}\n"
+            f"TTL: {record.get('ttl', 'not set')}\n"
+            f"Value: {record.get('value', 'unknown')}"
+        )
+    changes_str = "\n---\n".join(change_items)
+
+    prompt = f"""Analyze these DNS record changes:
+
+{changes_str}
+
+Respond ONLY with a valid JSON array of objects matching this exact structure:
+[
+  {{
+    "change": "<raw_record_string_matching_input>",
+    "risk_level": "safe|warning|high_risk|critical",
+    "explanation": "A very short, concise technical analysis of the security or availability impact (maximum 2 sentences).",
+    "suggestion": "A very short, direct recommendation to safely deploy or mitigate the risk (maximum 1 sentence)."
+  }},
+  ...
+]"""
+
+    try:
+        if use_openrouter:
+            headers = {
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "HTTP-Referer": "https://github.com/Dinesh2006-dev/dns-reviewer-bot",
+                "X-Title": "DNS Reviewer Bot",
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "model": OPENROUTER_MODEL,
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt}
+                ]
+            }
+            response = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=60,
+            )
+            response.raise_for_status()
+            raw_text = response.json()["choices"][0]["message"]["content"]
+        else:
+            response = requests.post(
+                OLLAMA_URL,
+                json={"model": MODEL, "prompt": prompt, "system": SYSTEM_PROMPT, "stream": False},
+                timeout=60,
+            )
+            response.raise_for_status()
+            raw_text = response.json().get("response", "{}")
+
+        # Strip markdown code fences if present
+        raw_text = raw_text.strip()
+        if raw_text.startswith("```"):
+            raw_text = raw_text.split("```")[1]
+            if raw_text.startswith("json"):
+                raw_text = raw_text[4:]
+
+        results = json.loads(raw_text.strip())
+        if isinstance(results, list):
+            return results
+        else:
+            if isinstance(results, dict):
+                if "change" in results:
+                    return [results]
+            raise ValueError("LLM did not respond with a valid JSON array")
+
+    except Exception as e:
+        provider = "OpenRouter" if use_openrouter else "Ollama"
+        fallback_results = []
+        for c in changes:
+            fallback_results.append({
+                "change": c["raw"],
+                "risk_level": "warning",
+                "explanation": f"LLM analysis via {provider} unavailable ({e}). Manual review recommended.",
+                "suggestion": "Review this change manually before merging.",
+            })
+        return fallback_results
+
+

@@ -10,7 +10,7 @@ from pr_fetcher import fetch_pr_diff
 from diff_parser import parse_diff
 from dns_validator import validate_zone
 from rule_engine import check_rules
-from llm_analyzer import analyze_with_llm
+from llm_analyzer import analyze_with_llm, analyze_batch_with_llm
 from formatter import format_review
 from pr_commenter import post_comment
 
@@ -60,11 +60,7 @@ def run_agent():
         rule_flags = check_rules(changes)
 
         # Step 5: LLM analysis
-        llm_results = []
-        for change in changes:
-            result = analyze_with_llm(change)
-            llm_results.append(result)
-            time.sleep(1)  # Pace API requests to prevent 429 rate limits
+        llm_results = analyze_batch_with_llm(changes)
 
         all_results.append({
             "filename": zone_file["filename"],

@@ -94,3 +94,81 @@ def test_llm_analyzer_fallback_on_error(mock_change):
             assert "OpenRouter" in result["explanation"]
             assert "Connection refused" in result["explanation"]
             assert result["change"] == mock_change["raw"]
+
+
+def test_llm_analyzer_batch_ollama_success(mock_change):
+    # Setup environment: OPENROUTER_API_KEY is None or empty
+    with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": ""}):
+        llm_analyzer.OPENROUTER_API_KEY = None
+        
+        mock_response = mock.Mock()
+        mock_response.json.return_value = {
+            "response": '[{"change": "www 3600 IN A 93.184.216.34", "risk_level": "safe", "explanation": "Standard A record.", "suggestion": null}]'
+        }
+        mock_response.raise_for_status.return_value = None
+        
+        with mock.patch("requests.post", return_value=mock_response) as mock_post:
+            result = llm_analyzer.analyze_batch_with_llm([mock_change])
+            
+            # Verify POST was called with Ollama parameters
+            mock_post.assert_called_once()
+            called_url, called_kwargs = mock_post.call_args
+            assert called_url[0] == llm_analyzer.OLLAMA_URL
+            
+            # Verify structure of result
+            assert isinstance(result, list)
+            assert len(result) == 1
+            assert result[0]["risk_level"] == "safe"
+            assert result[0]["explanation"] == "Standard A record."
+            assert result[0]["change"] == mock_change["raw"]
+
+
+def test_llm_analyzer_batch_openrouter_success(mock_change):
+    # Setup environment: OPENROUTER_API_KEY is set
+    with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": "fake_openrouter_key"}):
+        llm_analyzer.OPENROUTER_API_KEY = "fake_openrouter_key"
+        
+        mock_response = mock.Mock()
+        mock_response.json.return_value = {
+            "choices": [
+                {
+                    "message": {
+                        "content": '[{"change": "www 3600 IN A 93.184.216.34", "risk_level": "safe", "explanation": "Cloud analysis.", "suggestion": null}]'
+                    }
+                }
+            ]
+        }
+        mock_response.raise_for_status.return_value = None
+        
+        with mock.patch("requests.post", return_value=mock_response) as mock_post:
+            result = llm_analyzer.analyze_batch_with_llm([mock_change])
+            
+            # Verify POST was called with OpenRouter parameters
+            mock_post.assert_called_once()
+            called_url, called_kwargs = mock_post.call_args
+            assert called_url[0] == "https://openrouter.ai/api/v1/chat/completions"
+            
+            # Verify structure of result
+            assert isinstance(result, list)
+            assert len(result) == 1
+            assert result[0]["risk_level"] == "safe"
+            assert result[0]["explanation"] == "Cloud analysis."
+            assert result[0]["change"] == mock_change["raw"]
+
+
+def test_llm_analyzer_batch_fallback_on_error(mock_change):
+    # Setup environment: OPENROUTER_API_KEY is set
+    with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": "fake_openrouter_key"}):
+        llm_analyzer.OPENROUTER_API_KEY = "fake_openrouter_key"
+        
+        # Simulate connection error
+        with mock.patch("requests.post", side_effect=Exception("Connection refused")):
+            result = llm_analyzer.analyze_batch_with_llm([mock_change])
+            
+            # Verify graceful fallback response
+            assert isinstance(result, list)
+            assert len(result) == 1
+            assert result[0]["risk_level"] == "warning"
+            assert "OpenRouter" in result[0]["explanation"]
+            assert "Connection refused" in result[0]["explanation"]
+            assert result[0]["change"] == mock_change["raw"]
