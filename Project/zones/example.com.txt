@@ -15,7 +15,7 @@ $TTL 3600
 @    IN    NS    ns2.example.com.
 
 ; A Records
-@         3600    IN    A      93.184.287.36
+@         3600    IN    A      93.184.287.38
 wwy       3600    IN    A      93.187.215.32
 www       3600    IN    CNAME  target.example.com.
 api       3600    IN    A      10.0.0.6
